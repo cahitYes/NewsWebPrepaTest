@@ -40,7 +40,8 @@ class thearticleManager implements ManagerInterface
                 WHERE a.thearticleactivate=1 
                         AND u.theuseractivate=1 
                         AND sha.thesection_idthesection=?
-                GROUP BY a.idthearticle;
+                GROUP BY a.idthearticle
+                Order by date desc ;
         ";
         $prepare = $this->connect->prepare($sql);
 
