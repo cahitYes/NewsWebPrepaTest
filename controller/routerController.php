@@ -2,6 +2,7 @@
 // Use Global Manager
 use NewsWeb\Manager\thearticleManager;
 use NewsWeb\Manager\thesectionManager;
+use NewsWeb\Manager\theuserManager;
 use NewsWeb\Mapping\theuserMapping;
 
 // sections
@@ -12,7 +13,8 @@ use NewsWeb\Mapping\theuserMapping;
 $thesectionManager = new thesectionManager($connectMyPDO);
 // gestionnaire de la table thesection
 $thearticleManager = new thearticleManager($connectMyPDO);
-
+// gestionnaire de la table theuser
+$theuserManager = new theuserManager($connectMyPDO);
 // sélection de toutes les sections pour le menu
 $thesectionMenu = $thesectionManager->SelectAllThesection();
 
@@ -61,12 +63,14 @@ elseif (isset($_GET['article'])):
     // si slug trouvé, contient un tableau associatif
     $theArticleDatas = $thearticleManager->thearticleSelectOneBySlug($_GET['article']);
     //var_dump($theArticleDatas);
+    // si on reçoit false (pas d'article)
     if (!$theArticleDatas):
         // appel de l'erreur 404
         echo $twig->render('public/error404.html.twig', [
             'menu' => $thesectionMenu,
             'message' => "Cet article n'existe plus !",
         ]);
+    // on a récupéré un article
     else:
         echo $twig->render('public/article.html.twig', [
             'menu' => $thesectionMenu,
@@ -74,28 +78,26 @@ elseif (isset($_GET['article'])):
         ]);
 
     endif;
-/*
 
+// Articles par utilisateur    
+elseif (isset($_GET['user']) && ctype_digit($_GET['user'])):
+    $idUser = (int)$_GET['user'];
 
-        // appel de l'erreur 404
+    $theUserDatas = $thearticleManager->thearticleSelectAllByIdUser($idUser);
+
+    if (!$theUserDatas):
         echo $twig->render('public/error404.html.twig', [
-            'menu'    => $thesectionMenu,
-            'message' => $theSectionDatas,
+            'menu' => $thesectionMenu,
+            'message' => "Ces articles n'existent plus !",
         ]);
     else:
-
-        // Selection des articles de la section
-        $articles = $thearticleManager->thearticleSelectAllFromSection($theSectionDatas['idthesection']);
-
-        // affichage de le section
-        echo $twig->render('public/section.html.twig', [
-            'menu'     => $thesectionMenu,
-            'section'  => $theSectionDatas,
-            'articles' => $articles,
+        echo $twig->render('public/user.html.twig', [
+            'menu' => $thesectionMenu,
+            'articles' => $theUserDatas,
         ]);
 
     endif;
-*/
+
 // contact
 elseif (isset($_GET['contact'])):
     if (isset($_POST["name"], $_POST["email"], $_POST["message"])) {
@@ -128,9 +130,26 @@ Nous vous répondrons dans les plus bref délai.");
     echo $twig->render('public/contact.html.twig', [
         'menu' => $thesectionMenu,
     ]);
-// homepage
+elseif (isset($_GET['connect'])):
+
+    if (isset($_POST["theuserlogin"], $_POST["theuserpwd"])) {
+        $instanceTheuser = new theuserMapping($_POST);
+
+        if ($theuserManager->theuserConnectByLoginAndPwd($instanceTheuser)) {
+            header("Location: ./");
+        } else {
+            echo $twig->render("public/connexion.html.twig", [
+                'menu' => $thesectionMenu,
+                "error" => "Wrong Login or Password!",
+            ]);
+        }
+    } else {
+        echo $twig->render("public/connexion.html.twig", ['menu' => $thesectionMenu,]);
+    }
 else:
+    $lastArticles = $thearticleManager->thearticleSelectAll(3, 0);
     echo $twig->render('public/homepage.html.twig', [
         'menu' => $thesectionMenu,
+        "lastArticles" => $lastArticles,
     ]);
 endif;
