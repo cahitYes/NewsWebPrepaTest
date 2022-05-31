@@ -3,6 +3,7 @@ session_start();
 
 // use NewsWeb MyPDO class
 use NewsWeb\MyPDO;
+// use composer dependencies
 use Symfony\Component\Mailer\Mailer;
 use Symfony\Component\Mailer\Transport;
 use Symfony\Component\Mime\Email;
@@ -19,6 +20,7 @@ use Twig\Loader\FilesystemLoader;
 
 // dependencies
 require_once "../config.php";
+
 
 // Composer autoload
 require_once '../vendor/autoload.php';
@@ -43,8 +45,8 @@ $mailToAdmin    = (new Email())->to(ADMIN_MAIL);
 $mailToCustomer = (new Email())->from(ADMIN_MAIL);
 
 // Personal autoload
-spl_autoload_register(function($class) {
-    include_once '../model/' . $class . '.php';
+spl_autoload_register(function ($class) {
+    include_once '../model/' . str_replace('\\', '/', $class) . '.php';
 });
 
 // connect with MyPDO
@@ -55,12 +57,21 @@ try {
 }
 
 // Call the router
-// gestionnaire de la table theuser
+// Si on est connecté
 if (isset($_SESSION["idSession"]) && $_SESSION["idSession"] === session_id()) {
-    require_once "../controller/private/privateRouterController.php";
-}
+    // Si nous sommes un simple utilisateur, nous restons sur la partie publique du site, mais avec la permission d'écrire des commentaires
+    if ($_SESSION['permissionRole'] == 2) {
+
+        require_once "../controller/routerController.php";
+        // nous sommes admin ou rédacteurs
+    }
+    else {
+        // Nous allons sur l'administration
+        require_once "../controller/private/privateRouterController.php";
+    }
+} // Si nous ne sommes pas connectés
 else {
     require_once "../controller/routerController.php";
 }
-// close connection
+// close connection (portabilité hors MySQL, mettre en commentaire en cas de connexion permanente)
 $connectMyPDO = null;

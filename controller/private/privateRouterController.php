@@ -1,5 +1,13 @@
 <?php
 
+// système d'upload d'images
+/*
+ * https://packagist.org/packages/verot/class.upload.php
+ * https://github.com/verot/class.upload.php/blob/master/README.md
+ * https://www.verot.net/php_class_upload_samples.htm
+ */
+
+use Verot\Upload\Upload;
 use NewsWeb\Manager\theuserManager;
 
 if (isset($_GET["disconnect"]) || $_SESSION["idSession"] !== session_id()) {
@@ -7,15 +15,10 @@ if (isset($_GET["disconnect"]) || $_SESSION["idSession"] !== session_id()) {
     header("Location: ./");
     die();
 } else {
-    /*
-    echo "<h1>You are logged in!</h1><pre>";
-    var_dump($_SESSION);
-    echo "</pre><p><a href='?disconnect'>Logout?</a></p>";
-    // ici l'appel de la vue Twig (private homepage)
-    */
-    //var_dump($_SESSION);
-    echo $twig->render("private/homepage.template.html.twig", [
-        'username' => $_SESSION['userLogin'],
-        'session' => $_SESSION,
-    ]);
+    if ($_SESSION["permissionRole"] === "1") {
+        require_once "../controller/private/writer/writerRouterController.php";
+    }
+    elseif ($_SESSION["permissionRole"] === "0") {
+        require_once "../controller/private/admin/adminRouterController.php";
+    }
 }
